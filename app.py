@@ -3,6 +3,7 @@ import requests
 import pandas as pd
 import json
 from random import randint
+import re
 
 st.title('Kakao Map Favorites')
 KAKAO_HEADERS = { 'Authorization': 'KakaoAK d483260577bb08226008023b36bc9c3d' }
@@ -97,23 +98,26 @@ if not raw_households:
     st.stop()
 
 raw_households = raw_households.strip()
-households = [
-    {
+households = []
+for row in json.loads(raw_households):
+    if 'coordinates' not in row:
+        continue
+    match = re.search(r"(\S+동\s)?\S+호", row['address'])
+    if not match:
+        continue
+    households.append({
         'name': row['name'],
-        'address1': row['address'].split('\n')[0],
-        'address2': row['address'].split('\n')[1] if len(row['address'].split('\n')) > 2 else '',
+        'address': match.group().strip(),
         'latitude': row['coordinates']['latitude'],
         'longitude': row['coordinates']['longitude'],
-    }
-    for row in json.loads(raw_households)
-    if 'address' in row and 'coordinates' in row
-]
+    })
+    
 status_bar = st.progress(0, text='converting coordinates')
 for i, household in enumerate(households):
     status_bar.progress((i+1)/len(households), text=f'converting coordinates for ' + household['name'])
     coords = lat_long_to_wcongnamul(lat=household['latitude'], long=household['longitude'])
     household['x'] = coords['x']
-    household['y'] = coords['y']
+    household['y'] = coords['y']    
 
 st.dataframe(pd.DataFrame(households))
 
@@ -122,8 +126,8 @@ if st.button('Add {} addresses to the "{}" folder'.format(len(households), folde
         {
             'type': 'address',
             'key': 'N3' + str(randint(1e6,1e7)),
-            'display1': household['address1'],
-            'display2': household['address2'],
+            'display1': household['address'],
+            'display2': '',
             'x': household['x'],
             'y': household['y'],
             'color': '01',
