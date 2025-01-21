@@ -74,6 +74,7 @@ if not kawlt:
     st.image('./screenshots/kawlt.png')
     st.stop()
 
+kawlt = kawlt.strip()
 folder_list = get_folder_list(kawlt)
 folder_names = { folder['folderId']: folder['title'] for folder in folder_list }
 folder_id = st.selectbox('Select folder', folder_names.keys(), format_func=lambda x: folder_names[x])
@@ -95,6 +96,7 @@ if not raw_households:
     st.write('''Copy the JSON data and paste it in the text box above''')
     st.stop()
 
+raw_households = raw_households.strip()
 households = [
     {
         'name': row['name'],
